@@ -93,6 +93,10 @@ describe('Mocha', function() {
       sinon.stub(Mocha.prototype, 'retries').returnsThis();
       sinon.stub(Mocha.prototype, 'rootHooks').returnsThis();
       sinon.stub(Mocha.prototype, 'parallelMode').returnsThis();
+      sinon.stub(Mocha.prototype, 'globalSetup').returnsThis();
+      sinon.stub(Mocha.prototype, 'globalTeardown').returnsThis();
+      sinon.stub(Mocha.prototype, 'enableGlobalSetup').returnsThis();
+      sinon.stub(Mocha.prototype, 'enableGlobalTeardown').returnsThis();
     });
 
     it('should set _cleanReferencesAfterRun to true', function() {
@@ -171,6 +175,44 @@ describe('Mocha', function() {
           // eslint-disable-next-line no-new
           new Mocha({parallel: true, jobs: 1});
           expect(Mocha.prototype.parallelMode, 'was not called');
+        });
+      });
+
+      describe('when `globalSetup` option is present', function() {
+        it('should configure global setup fixtures', function() {
+          const globalSetup = [() => {}];
+          const mocha = new Mocha({globalSetup});
+          expect(mocha.globalSetup, 'to have a call satisfying', [
+            globalSetup
+          ]).and('was called once');
+        });
+      });
+
+      describe('when `globalTeardown` option is present', function() {
+        it('should configure global teardown fixtures', function() {
+          const globalTeardown = [() => {}];
+          const mocha = new Mocha({globalTeardown});
+          expect(mocha.globalTeardown, 'to have a call satisfying', [
+            globalTeardown
+          ]).and('was called once');
+        });
+      });
+
+      describe('when `enableGlobalSetup` option is present', function() {
+        it('should toggle global setup fixtures', function() {
+          const mocha = new Mocha({enableGlobalSetup: 1});
+          expect(mocha.enableGlobalSetup, 'to have a call satisfying', [1]).and(
+            'was called once'
+          );
+        });
+      });
+
+      describe('when `enableGlobalTeardown` option is present', function() {
+        it('should configure global teardown fixtures', function() {
+          const mocha = new Mocha({enableGlobalTeardown: 1});
+          expect(mocha.enableGlobalTeardown, 'to have a call satisfying', [
+            1
+          ]).and('was called once');
         });
       });
     });
