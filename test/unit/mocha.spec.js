@@ -965,5 +965,94 @@ describe('Mocha', function() {
         });
       });
     });
+    describe('rootHooks()', function() {
+      it('should be chainable', function() {
+        expect(mocha.rootHooks(), 'to be', mocha);
+      });
+
+      describe('when provided a single "before all" hook', function() {
+        it('should attach it to the root suite', function() {
+          const beforeAll = () => {};
+          mocha.rootHooks({beforeAll});
+          expect(mocha.suite.beforeAll, 'to have a call satisfying', [
+            beforeAll
+          ]).and('was called once');
+        });
+      });
+
+      describe('when provided a single "before each" hook', function() {
+        it('should attach it to the root suite', function() {
+          const beforeEach = () => {};
+          mocha.rootHooks({beforeEach});
+          expect(mocha.suite.beforeEach, 'to have a call satisfying', [
+            beforeEach
+          ]).and('was called once');
+        });
+      });
+
+      describe('when provided a single "after all" hook', function() {
+        it('should attach it to the root suite', function() {
+          const afterAll = () => {};
+          mocha.rootHooks({afterAll});
+          expect(mocha.suite.afterAll, 'to have a call satisfying', [
+            afterAll
+          ]).and('was called once');
+        });
+      });
+
+      describe('when provided a single "after each" hook', function() {
+        it('should attach it to the root suite', function() {
+          const afterEach = () => {};
+          mocha.rootHooks({afterEach});
+          expect(mocha.suite.afterEach, 'to have a call satisfying', [
+            afterEach
+          ]).and('was called once');
+        });
+      });
+
+      describe('when provided multiple "before all" hooks', function() {
+        it('should attach each to the root suite', function() {
+          const beforeAll = [() => {}, () => {}];
+          mocha.rootHooks({beforeAll});
+          expect(mocha.suite.beforeAll, 'to have calls satisfying', [
+            [beforeAll[0]],
+            [beforeAll[1]]
+          ]).and('was called twice');
+        });
+      });
+
+      describe('when provided multiple "before each" hooks', function() {
+        it('should attach each to the root suite', function() {
+          const beforeEach = [() => {}, () => {}];
+          mocha.rootHooks({beforeEach});
+          expect(mocha.suite.beforeEach, 'to have calls satisfying', [
+            [beforeEach[0]],
+            [beforeEach[1]]
+          ]).and('was called twice');
+        });
+      });
+
+      describe('when provided multiple "after all" hooks', function() {
+        it('should attach each to the root suite', function() {
+          const afterAll = [() => {}, () => {}];
+          mocha.rootHooks({afterAll});
+          expect(mocha.suite.afterAll, 'to have calls satisfying', [
+            [afterAll[0]],
+            [afterAll[1]]
+          ]).and('was called twice');
+        });
+      });
+
+      describe('when provided multiple "after each" hooks', function() {
+        it('should attach each to the root suite', function() {
+          const afterEach = [() => {}, () => {}];
+          mocha.rootHooks({afterEach});
+          expect(mocha.suite.afterEach, 'to have calls satisfying', [
+            [afterEach[0]],
+            [afterEach[1]]
+          ]).and('was called twice');
+        });
+      });
+    });
   });
 });
