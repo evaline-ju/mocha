@@ -51,7 +51,7 @@ describe('Mocha', function() {
     sinon.stub(Mocha.reporters, 'base').returns({});
     sinon.stub(Mocha.reporters, 'spec').returns({});
 
-    runner = utils.assign(sinon.createStubInstance(EventEmitter), {
+    runner = Object.assign(sinon.createStubInstance(EventEmitter), {
       runAsync: sinon.stub().resolves(0),
       globals: sinon.stub(),
       grep: sinon.stub(),
@@ -61,12 +61,16 @@ describe('Mocha', function() {
     // the Runner constructor is the main export, and constants is a static prop.
     // we don't need the constants themselves, but the object cannot be undefined
     Runner.constants = {};
-    suite = utils.assign(sinon.createStubInstance(EventEmitter), {
+    suite = Object.assign(sinon.createStubInstance(EventEmitter), {
       slow: sinon.stub(),
       timeout: sinon.stub(),
       bail: sinon.stub(),
       dispose: sinon.stub(),
-      reset: sinon.stub()
+      reset: sinon.stub(),
+      beforeAll: sinon.stub(),
+      beforeEach: sinon.stub(),
+      afterAll: sinon.stub(),
+      afterEach: sinon.stub()
     });
     Suite = sinon.stub(Mocha, 'Suite').returns(suite);
     Suite.constants = {};
@@ -583,6 +587,14 @@ describe('Mocha', function() {
     });
 
     describe('run()', function() {
+      let globalFixtureContext;
+
+      beforeEach(function() {
+        globalFixtureContext = {};
+        sinon.stub(mocha, 'runGlobalSetup').returns(globalFixtureContext);
+        sinon.stub(mocha, 'runGlobalTeardown').returns(globalFixtureContext);
+      });
+
       describe('when files have been added to the Mocha instance', function() {
         beforeEach(function() {
           sinon.stub(mocha, 'loadFiles');
@@ -865,6 +877,153 @@ describe('Mocha', function() {
           });
         });
       });
+
+      describe('when global setup fixtures enabled', function() {
+        beforeEach(function() {
+          mocha.options.enableGlobalSetup = true;
+        });
+        describe('when global setup fixtures not present', function() {
+          beforeEach(function() {
+            sinon.stub(mocha, 'hasGlobalSetupFixtures').returns(false);
+          });
+
+          it('should not run global setup fixtures', function(done) {
+            mocha.run(() => {
+              expect(mocha.runGlobalSetup, 'was not called');
+              done();
+            });
+          });
+        });
+
+        describe('when global setup fixtures are present', function() {
+          beforeEach(function() {
+            sinon.stub(mocha, 'hasGlobalSetupFixtures').returns(true);
+          });
+
+          it('should run global setup fixtures', function(done) {
+            mocha.run(() => {
+              expect(mocha.runGlobalSetup, 'to have a call satisfying', {
+                args: [expect.it('to be', runner)]
+              }).and('was called once');
+              done();
+            });
+          });
+        });
+      });
+
+      describe('when global setup fixtures disabled', function() {
+        beforeEach(function() {
+          mocha.options.enableGlobalSetup = false;
+        });
+        describe('when global setup fixtures not present', function() {
+          beforeEach(function() {
+            sinon.stub(mocha, 'hasGlobalSetupFixtures').returns(false);
+          });
+
+          it('should not run global setup fixtures', function(done) {
+            mocha.run(() => {
+              expect(mocha.runGlobalSetup, 'was not called');
+              done();
+            });
+          });
+        });
+
+        describe('when global setup fixtures are present', function() {
+          beforeEach(function() {
+            sinon.stub(mocha, 'hasGlobalSetupFixtures').returns(true);
+          });
+
+          it('should not run global setup fixtures', function(done) {
+            mocha.run(() => {
+              expect(mocha.runGlobalSetup, 'was not called');
+              done();
+            });
+          });
+        });
+      });
+
+      describe('when global teardown fixtures enabled', function() {
+        beforeEach(function() {
+          mocha.options.enableGlobalTeardown = true;
+        });
+        describe('when global teardown fixtures not present', function() {
+          beforeEach(function() {
+            sinon.stub(mocha, 'hasGlobalTeardownFixtures').returns(false);
+          });
+
+          it('should not run global teardown fixtures', function(done) {
+            mocha.run(() => {
+              expect(mocha.runGlobalTeardown, 'was not called');
+              done();
+            });
+          });
+        });
+
+        describe('when global teardown fixtures are present', function() {
+          beforeEach(function() {
+            sinon.stub(mocha, 'hasGlobalTeardownFixtures').returns(true);
+          });
+
+          it('should run global teardown fixtures', function(done) {
+            mocha.run(() => {
+              expect(mocha.runGlobalTeardown, 'to have a call satisfying', {
+                args: [expect.it('to be', runner), {context: {}}]
+              }).and('was called once');
+              done();
+            });
+          });
+
+          describe('when global setup fixtures are present and enabled', function() {
+            beforeEach(function() {
+              sinon.stub(mocha, 'hasGlobalSetupFixtures').returns(true);
+              mocha.options.enableGlobalSetup = true;
+            });
+
+            it('should use the same context as returned by `runGlobalSetup`', function(done) {
+              mocha.run(() => {
+                expect(mocha.runGlobalTeardown, 'to have a call satisfying', {
+                  args: [
+                    expect.it('to be', runner),
+                    {context: globalFixtureContext}
+                  ]
+                }).and('was called once');
+                done();
+              });
+            });
+          });
+        });
+      });
+
+      describe('when global teardown fixtures disabled', function() {
+        beforeEach(function() {
+          mocha.options.enableGlobalTeardown = false;
+        });
+        describe('when global teardown fixtures not present', function() {
+          beforeEach(function() {
+            sinon.stub(mocha, 'hasGlobalTeardownFixtures').returns(false);
+          });
+
+          it('should not run global teardown fixtures', function(done) {
+            mocha.run(() => {
+              expect(mocha.runGlobalTeardown, 'was not called');
+              done();
+            });
+          });
+        });
+
+        describe('when global teardown fixtures are present', function() {
+          beforeEach(function() {
+            sinon.stub(mocha, 'hasGlobalTeardownFixtures').returns(true);
+          });
+
+          it('should not run global teardown fixtures', function(done) {
+            mocha.run(() => {
+              expect(mocha.runGlobalTeardown, 'was not called');
+              done();
+            });
+          });
+        });
+      });
     });
 
     describe('parallelMode()', function() {
@@ -914,12 +1073,12 @@ describe('Mocha', function() {
         context = {};
       });
 
-      describe('when a fixture is present', function() {
+      describe('when fixture(s) are present', function() {
         beforeEach(function() {
           mocha.options.globalSetup = [sinon.spy()];
         });
 
-        it('should call _runGlobalFixtures()', async function() {
+        it('should attempt run the fixtures', async function() {
           await mocha.runGlobalSetup(context);
           expect(mocha._runGlobalFixtures, 'to have a call satisfying', [
             mocha.options.globalSetup,
@@ -929,7 +1088,7 @@ describe('Mocha', function() {
       });
 
       describe('when a fixture is not present', function() {
-        it('should not call _runGlobalFixtures()', async function() {
+        it('should not attempt to run fixtures', async function() {
           await mocha.runGlobalSetup();
           expect(mocha._runGlobalFixtures, 'was not called');
         });
@@ -944,12 +1103,12 @@ describe('Mocha', function() {
         context = {};
       });
 
-      describe('when a fixture is present', function() {
+      describe('when fixture(s) are present', function() {
         beforeEach(function() {
           mocha.options.globalTeardown = [sinon.spy()];
         });
 
-        it('should call _runGlobalFixtures()', async function() {
+        it('should attempt to run the fixtures', async function() {
           await mocha.runGlobalTeardown();
           expect(mocha._runGlobalFixtures, 'to have a call satisfying', [
             mocha.options.globalTeardown,
@@ -959,12 +1118,45 @@ describe('Mocha', function() {
       });
 
       describe('when a fixture is not present', function() {
-        it('should not call _runGlobalFixtures()', async function() {
+        it('not attempt to run the fixtures', async function() {
           await mocha.runGlobalTeardown();
           expect(mocha._runGlobalFixtures, 'was not called');
         });
       });
     });
+
+    describe('hasGlobalSetupFixtures()', function() {
+      describe('when one or more global setup fixtures are present', function() {
+        it('should return `true`', function() {
+          mocha.options.globalSetup = [() => {}];
+          expect(mocha.hasGlobalSetupFixtures(), 'to be true');
+        });
+      });
+
+      describe('when no global setup fixtures are present', function() {
+        it('should return `false`', function() {
+          mocha.options.globalSetup = [];
+          expect(mocha.hasGlobalSetupFixtures(), 'to be false');
+        });
+      });
+    });
+
+    describe('hasGlobalTeardownFixtures()', function() {
+      describe('when one or more global teardown fixtures are present', function() {
+        it('should return `true`', function() {
+          mocha.options.globalTeardown = [() => {}];
+          expect(mocha.hasGlobalTeardownFixtures(), 'to be true');
+        });
+      });
+
+      describe('when no global teardown fixtures are present', function() {
+        it('should return `false`', function() {
+          mocha.options.globalTeardown = [];
+          expect(mocha.hasGlobalTeardownFixtures(), 'to be false');
+        });
+      });
+    });
+
     describe('rootHooks()', function() {
       it('should be chainable', function() {
         expect(mocha.rootHooks(), 'to be', mocha);
